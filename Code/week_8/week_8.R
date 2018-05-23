@@ -8,10 +8,6 @@
 #Over time, which states produce the most honey? 
   #Which produce the least? 
   #Which have experienced the most change in honey yield?
-#Does the data show any trends in terms of the number of honey producing colonies and yield per colony before 2006
-  #which was when concern over Colony Collapse Disorder spread nationwide?
-#Are there any patterns that can be observed between total honey production and value of production every year? 
-  #How has value of production, which in some sense could be tied to demand, changed every year?
 
 library(readr)
 library(ggplot2)
@@ -29,25 +25,30 @@ honey_production$state %<>%
   abbr2state() %>% 
   tolower()
 
+#Change scale of total production
+honey_production$totalprod  <- honey_production$totalprod/1000
+
 #Add production data to a map dataframe for plotting
 production_map <- map_data("state")
 production_map %<>% 
   full_join(honey_production, by = c("region" = "state"))
 
 #Create US map of honey production by state
-map <- ggplot(production_map, aes(long, lat)) +
-  geom_polygon(aes(fill = totalprod,
+h_map <- ggplot(production_map, aes(long, lat)) +
+  geom_polygon(aes(group = group, 
+                   fill = totalprod,
                    frame = year)) +
-  scale_fill_distiller(palette = "Spectral") +
+  scale_fill_distiller(palette = "Spectral", labels = scales::comma) +
   coord_map('mercator') +
   theme_void() +
   theme(legend.position="bottom", legend.box="horizontal",
         legend.key.width=grid::unit(.1,'npc')) +
-  guides(fill = guide_colourbar(title.position="top",
-                                title.hjust = 0.5))
+  guides(fill = guide_colourbar(title = "Honey Production (lbs)",
+                                title.position="top",
+                                title.hjust = 0.5)) 
 
-gganimate(map, interval = 5)
 #Create dynamic ggplot map of production over time
+gganimate(h_map, "Plots/yearly_honey_production.gif", interval = 1)
 
 
 
